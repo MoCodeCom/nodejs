@@ -20,17 +20,20 @@ const db = require("../modules/Db");
 /*----------------------------------------------------*/
 const databaseController = require('../controllers/databaseController');
 const filesController = require('../controllers/filesController');
+const apiController = require('../controllers/apiController');
 const fileUpload = require('express-fileupload');
+const database = require('../util/database');
 /*----------------------------------------------------*/
 //********* Create table ********/
 router.get('/creatcredorextbl', databaseController.createTbl_credorex);
 router.get('/createcptbl', databaseController.createTbl_cp);
 router.get('/createreconcredorex', databaseController.createTbl_recon_credorex)
-
+router.get('/createcredorexindex',databaseController.createTbl_credorex_index);
 //********* Delete table ********/
 router.delete('/deletcredorextbl', databaseController.deleteTbl_credorex);
 router.delete('/deletecptbl', databaseController.deleteTbl_cp);
 router.delete('/deletereconcredorex', databaseController.deleteTbl_recon_credorex);
+router.delete('/deletecredorexindex',databaseController.deleteTbl_credorex_index);
 
 
 //********* Upload Data *********/
@@ -38,15 +41,21 @@ router.post('/uploadcredorex',fileUpload(uploadOpts), async(req, res)=>{
     try{
         const {excel} = req.files.file;
         await csvtojson().fromFile(req.files.file.tempFilePath)
-        .then(source => {
+        .then(async source => {
             
-            db.exist_credorex_table_item(`credorex`,'statement_date',source[1]['statement_date'])
+            await db.exist_credorex_table_item(`credorex`,'statement_date',source[1]['statement_date'])
             .then(result =>{
-                if(result[0].length > 1){
+                
+                if(result[0].length > 0){
                     res.status(200).json(
-                        {message:'The data statement already exist in the database.'}
+                        {
+                            message_code: 1,
+                            message:'The data statement already exist in the database.'
+                        }
                     );
-                }else{
+                }
+                else if(source[0]['statement_date'] != null){
+
                     for(var i = 0;i<source.length;i++){
                         var statement_date = source[i]['statement_date'],
                             transaction_date = source[i]['transaction_date'],
@@ -71,6 +80,14 @@ router.post('/uploadcredorex',fileUpload(uploadOpts), async(req, res)=>{
                         message:'The data is uploaded successfully'
                     });
                 }
+                else{
+                    res.status(200).json(
+                        {
+                            message_code:2,
+                            message:'The data statement not compatible with database structure.'
+                        }
+                    );
+                }
             })
             .catch(error =>{
                 console.log(error.sqlMessage)
@@ -94,14 +111,18 @@ router.post('/uploadcpcredorex',fileUpload(uploadcpfile),async(req, res)=>{
         const {excel} = req.files;
         await csvtojson().fromFile(req.files.file.tempFilePath)
         .then(async source => {
-            await console.log(source.length);
-            db.exist_cp_credorex_table_item(source[1]['sDate'])
+            //await console.log(source.length);
+            await db.exist_cp_credorex_table_item(source[1]['sDate'])
             .then(async result =>{
                 if(result[0].length > 0){
                     res.status(200).json(
-                        {message:'The data statement already exist in the database.'}
+                        {
+                            message_code:1,
+                            message:'The data statement already exist in the database.'
+                        }
                     );
-                }else{
+                }
+                else if(source[0]['sDate'] != null){
                     for(let i = 0; i < source.length ;i++){
                         var ID = source[i]['ID'],
                             sDate = source[i]['sDate'],
@@ -123,6 +144,14 @@ router.post('/uploadcpcredorex',fileUpload(uploadcpfile),async(req, res)=>{
                         message:'The data is uploaded successfully'
                     });
                 }
+                else{
+                    res.status(200).json(
+                        {
+                            message_code:2,
+                            message:'The data statement not compatible with database structure.'
+                        }
+                    );
+                }
             }).catch(error => console.log(error.sqlMessage))
         })
         .catch(
@@ -135,9 +164,20 @@ router.post('/uploadcpcredorex',fileUpload(uploadcpfile),async(req, res)=>{
     }
 });
 
+//********* Reconciliation ***********/
+router.get('/reconcredorex',databaseController.reconciliation_credorex);
+router.get('/getreconcredorex',databaseController.get_reconcilitaion_credorex);
+router.delete('/deleteallreconcredorex',databaseController.deleteAllData_recon_credorex);
 
+//*********** credorex *************** */
+router.delete('/deleteallcredorex',databaseController.deleteAllData_credorex);
+router.delete('/deleteallcpcredorex',databaseController.deleteAllData_cp_credorex);
+router.delete('/deleteallcredorexindex',databaseController.deleteAllData_credorex_index);
+router.delete('/deleterowreconcredorex/:id',databaseController.deleteRow_recon_credorex);
+router.delete('/deleterowreconcredorexauto',databaseController.deleteRow_recon_credorex_auto);
 
-
+//************ Checkout API *******************/
+router.get('/getcheckoutpayment',apiController.checkoutAPI);
 
 
 
