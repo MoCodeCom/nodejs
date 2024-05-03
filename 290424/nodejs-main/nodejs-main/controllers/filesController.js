@@ -108,7 +108,7 @@ exports.uploadprocessorcredorax = async(req, res)=>{
             
             await db.exist_data_table('credorex','statement_date',source[1]['statement_date'])
             .then(result =>{
-                console.log(result[0]);
+                //console.log(result[0]);
                 if(result[0].length > 0){
                     res.status(200).json(
                         {
@@ -118,8 +118,8 @@ exports.uploadprocessorcredorax = async(req, res)=>{
                     );
                 }
                 else if(source[0]['statement_date'] != null){
-
-                    for(var i = 0;i<source.length;i++){
+                   
+                    for(let i = 0;i<source.length;i++){
                         var statement_date = source[i]['statement_date'],
                             transaction_date = source[i]['transaction_date'],
                             posting_date = source[i]['posting_date'],
@@ -133,10 +133,12 @@ exports.uploadprocessorcredorax = async(req, res)=>{
                             net_activity = source[i]['net_activity'],
                             card_scheme = source[i]['card_scheme'],
                             merchant_reference_number_h9 = source[i]['merchant_reference_number_h9'];
-        
-                        
-                            var insertStatement = 'INSERT INTO credorex(statement_date, transaction_date, posting_date, transaction_currency, transaction_amount,fixed_transaction_fee,discount_rate,interchange,card_scheme_fees,acquiring_fee,net_activity,card_scheme,merchant_reference_number_h9)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)';
-                            var items = [statement_date, transaction_date, posting_date, transaction_currency, transaction_amount,fixed_transaction_fee,discount_rate,interchange,card_scheme_fees,acquiring_fee,net_activity,card_scheme,merchant_reference_number_h9];
+
+                        var transaction_type = source[i]['transaction_type'];
+                        var cs_settlement_currency = source[i]['cs_settlement_currency'];
+                            
+                            var insertStatement = 'INSERT INTO credorex(statement_date, transaction_date, posting_date, transaction_currency, cs_settlement_currency, transaction_amount,transaction_type,fixed_transaction_fee,discount_rate,interchange,card_scheme_fees,acquiring_fee,net_activity,card_scheme,merchant_reference_number_h9)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                            var items = [statement_date, transaction_date, posting_date, transaction_currency,cs_settlement_currency, transaction_amount,transaction_type,fixed_transaction_fee,discount_rate,interchange,card_scheme_fees,acquiring_fee,net_activity,card_scheme,merchant_reference_number_h9];
                             pool.query(insertStatement, items);
                     }
                     res.status(200).json({
