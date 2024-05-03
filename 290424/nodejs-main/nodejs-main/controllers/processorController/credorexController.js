@@ -291,6 +291,43 @@ exports.get_reconcilitaion_credorex = async(req, res, next)=>{
     })
 }
 
+//get data from recon table on date
+exports.get_reconciliation_credorex_dateCondition = async(req, res, next)=>{
+    const column = req.query.column;
+    const date = req.params.date;
+    if(column === 'system'){
+        await db.get_reconciliation_condition('recon_credorex',`DATE(posting_date_system) = '${date}'`)
+        .then(result =>{
+            res.status(200).json({
+                results:result,
+                message:'Get data successful.'
+            })
+        })
+        .catch(error =>{
+            res.status(200).json({
+                message:error
+            })
+        });
+    }else if(column === 'processor'){
+        
+        await db.get_reconciliation_condition('recon_credorex',`DATE(posting_date_processor) = '${date}'`)
+        .then(result =>{
+            res.status(200).json({
+                results:result,
+                message:'Get data successful.'
+            })
+        })
+        .catch(error =>{
+            res.status(200).json({
+                message:error
+            })
+        });
+    }else{
+
+    }
+    
+}
+
 //delete row from recon table "MATCH"
 exports.deleteRow_recon_credorex = async(req, res, next)=>{
     const id = req.params.id;
@@ -335,6 +372,132 @@ exports.delete_same_credorax = async(req, res, next)=>{
 
 
 
+//**************************  register index *************************** */
+
+exports.register_credorex_index = async(req, res, next)=>{
+    const processor = req.query.processor;
+
+    switch (processor) {
+        case 'credorax':
+            await db.register_in_table('credorex_index','credorex',['statement_date', 'transaction_date','posting_date','transaction_currency','cs_settlement_currency','transaction_amount','transaction_type','fixed_transaction_fee','discount_rate','interchange','card_scheme_fees','acquiring_fee','net_activity','card_scheme','merchant_reference_number_h9'])
+            .then(result =>{
+                res.status(200).json({
+                    message:'Register in credorax data is done successfully.'
+                })
+            })
+            .catch(error =>{
+                res.status(200).json({
+                    message:error
+                })
+            });
+            break;
+    
+        default:
+            break;
+    }
+    
+}
+
+exports.get_payment_index = async(req, res, next)=>{
+    const processor = req.query.processor;
+    switch (processor) {
+        case 'credorax':
+            await db.get_payment_processor('credorex_index','transaction_type','Payment')
+            .then(result =>{
+                res.status(200).json({
+                    result:result
+                })
+            })
+            .catch(error =>{
+                res.status(200).json({
+                    result:error
+                })
+            });
+            break;
+    
+        default:
+            break;
+    }
+    
+}
+
+exports.get_sum_payment = async(req, res, next)=>{
+    const processor = req.query.processor;
+    const curr = req.query.curr;
+    
+    switch (processor) {
+        case 'credorax':
+            const column_title_condition = 'transaction_type';
+            const item_condetion = 'Payment';
+            const column_curr = 'cs_settlement_currency';
+            await db.get_sum('appdb.credorex_index','net_activity',column_title_condition, item_condetion,column_curr, curr)
+            .then(result =>{
+                res.status(200).json({
+                    result:result,
+                    currency:curr
+                })
+            })
+            .catch(error =>{
+                res.status(200).json({
+                    result:error
+                })
+            });
+            break;
+    
+        default:
+            break;
+    }
+
+}
+
+exports.get_sum_refund = async(req, res, next)=>{
+    const processor = req.query.processor;
+    const curr = req.query.curr;
+    
+    switch (processor) {
+        case 'credorax':
+            const column_title_condition = 'transaction_type';
+            const item_condetion = 'Payment';
+            const column_curr = 'cs_settlement_currency';
+            await db.get_sum('appdb.credorex_index','net_activity',column_title_condition, item_condetion,column_curr, curr)
+            .then(result =>{
+                res.status(200).json({
+                    result:result,
+                    currency:curr
+                })
+            })
+            .catch(error =>{
+                res.status(200).json({
+                    result:error
+                })
+            });
+            break;
+    
+        default:
+            break;
+    }
+
+}
+//----------------------------> Fees
+exports.get_sum_fees = async(req, res, next)=>{
+    const processor = req.query.processor;
+    const curr = req.query.curr;
+    const fee = req.query.fee;
+    await db.get_sum_fees(`appdb.${processor}_index`,fee)
+    .then(result =>{
+        res.status(200).json({
+            result:result,
+            currency:curr,
+            fee:fee
+        })
+    })
+    .catch(error =>{
+        res.status(200).json({
+            result:error
+        })
+    });
+
+}
 
 
 

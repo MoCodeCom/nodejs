@@ -39,8 +39,6 @@ router.delete('/processor/credorax/deletecredorexindex',processorController.dele
 
 //********* Upload Data *********/
 router.post('/processor/credorax/uploadcredorex',fileUpload(uploadOpts), filesController.uploadprocessorcredorax);
-
-
 router.post('/processor/credorax/uploadcpcredorex',fileUpload(uploadcpfile),filesController.uploadcpcredorax);
 
 //********* Reconciliation ***********/
@@ -62,8 +60,14 @@ router.get('/getcheckoutpayment',apiController.checkoutAPI);
 router.get('/processor/credorax/searchcredorexprocessor/:item',processorController.searching_processor_recon_credorex_processor);
 router.get('/processor/credorax/searchcredorexsystem/:item',processorController.searching_processor_recon_credorex_system);
 
+/******************** Get with date *************************/
+router.get('/processor/credorax/getrecondate/:date',processorController.get_reconciliation_credorex_dateCondition);
 
-
+/******************** Register *******************************/
+router.post('/processor/credorax/postregister',processorController.register_credorex_index);
+router.get('/processor/credorax/getpayments',processorController.get_payment_index);
+router.get('/processor/credorax/getsumpayments',processorController.get_sum_payment);
+router.get('/processor/credorax/getsumfees', processorController.get_sum_fees)
 
 /*-----------------------------------------------------*/
 module.exports = router;
