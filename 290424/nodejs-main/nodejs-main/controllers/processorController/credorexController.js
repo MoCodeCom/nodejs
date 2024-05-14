@@ -271,9 +271,9 @@ exports.reconciliation_credorex = async(req, res, next)=>{
                 message:error
             }
         );
-        console.log(error);
     });
 }
+
 //get data form recon table
 exports.get_reconcilitaion_credorex = async(req, res, next)=>{
     await db.get_reconciliation_credorex()
@@ -341,11 +341,11 @@ exports.deleteRow_recon_credorex = async(req, res, next)=>{
         res.status(200).json({message:error});
     });
 }
+
 // delete row form recon when matching auto
 exports.deleteRow_recon_credorex_auto = async(req, res, next)=>{
     //const id = req.params.id;
     const condition = "ID_system = ID_processor OR ID_processor = ID_system";
-    
     await db.delete_row_reconciliation_credorex('recon_credorex',condition)
     .then(result =>{
         res.status(200).json({message:'delete and clean data row form table is done!.'})
@@ -354,6 +354,7 @@ exports.deleteRow_recon_credorex_auto = async(req, res, next)=>{
         res.status(404).json({message:error});
     });
 }
+
 // delete row when repeated  in same cloumn in recon
 exports.delete_same_credorax = async(req, res, next)=>{
     await db.delete_row_recon_same("recon_credorex", "ID_system").then(async ()=>{
@@ -450,14 +451,32 @@ exports.get_sum_payment = async(req, res, next)=>{
 
 }
 
+exports.get_sum_recon = async(req, res, next)=>{
+    const processor = req.query.processor;
+    const curr = req.query.curr;
+    await db.get_sum_recon(`appdb.${processor}`,'amount_processor','currency_processor',curr)
+        .then(result =>{
+            res.status(200).json({
+                result:result,
+                currency:curr
+            })
+        })
+        .catch(error =>{
+            res.status(200).json({
+                result:error
+            })
+    });
+      
+}
+
 exports.get_sum_refund = async(req, res, next)=>{
     const processor = req.query.processor;
     const curr = req.query.curr;
     
     switch (processor) {
-        case 'credorax':
+        case 'credorex':
             const column_title_condition = 'transaction_type';
-            const item_condetion = 'Payment';
+            const item_condetion = 'Refund';
             const column_curr = 'cs_settlement_currency';
             await db.get_sum('appdb.credorex_index','net_activity',column_title_condition, item_condetion,column_curr, curr)
             .then(result =>{
@@ -478,25 +497,73 @@ exports.get_sum_refund = async(req, res, next)=>{
     }
 
 }
+
+exports.get_record_statement = async(req, res, next)=>{
+    const processor = req.query.processor;
+    const date = req.query.date;
+    const curr = req.query.curr;
+
+    switch (processor) {
+        case 'credorex':
+            await db.get_record_statement('credorex_index','statement_date',date,'cs_settlement_currency',curr)
+            .then(result =>{
+                res.status(200).json({
+                    result:result,
+                    curr:curr
+                })
+            })
+            .catch(error=>{
+                res.status(200).json({
+                    result:error
+                })
+            })
+            return 
+        default:
+            return
+    }
+}
 //----------------------------> Fees
 exports.get_sum_fees = async(req, res, next)=>{
     const processor = req.query.processor;
     const curr = req.query.curr;
     const fee = req.query.fee;
-    await db.get_sum_fees(`appdb.${processor}_index`,fee)
+
+    switch (processor) {
+        case 'credorex':
+            await db.get_sum_fees(`appdb.${processor}_index`,fee,'cs_settlement_currency',curr)
+            .then(result =>{
+                res.status(200).json({
+                    result:result,
+                    currency:curr,
+                    fee:fee
+                })
+            })
+            .catch(error =>{
+                res.status(200).json({
+                    result:error
+                })
+            });
+            break;
+    
+        default:
+            break;
+    }
+    
+
+}
+
+exports.update_recon = async(req, res, next)=>{
+    await db.update_reconciliation_credoex()
     .then(result =>{
         res.status(200).json({
-            result:result,
-            currency:curr,
-            fee:fee
+            result:result
         })
     })
     .catch(error =>{
         res.status(200).json({
             result:error
         })
-    });
-
+    })
 }
 
 

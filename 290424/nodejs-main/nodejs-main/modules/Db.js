@@ -38,7 +38,7 @@ module.exports = class Data{
 
     //create table cp _ credorax
     static createTable_cp_credorax(){
-        const q = "CREATE TABLE cp_credorex (id INT UNSIGNED NOT NULL AUTO_INCREMENT,ID_trans VARCHAR(20),sDate VARCHAR(20),rDate VARCHAR(20),Status VARCHAR(10),Paid VARCHAR(45),pCrn VARCHAR(45),Received VARCHAR(50),rCrn VARCHAR(50),Processor VARCHAR(50),Pay_out_agent VARCHAR(25),PID VARCHAR(50),PRIMARY KEY (id),UNIQUE INDEX id_UNIQUE (id ASC) VISIBLE);";
+        const q = "CREATE TABLE cp_credorex (id INT UNSIGNED NOT NULL AUTO_INCREMENT,ID_trans VARCHAR(20),sDate VARCHAR(20),rDate VARCHAR(50),Status VARCHAR(50),Paid VARCHAR(45),pCrn VARCHAR(45),Received VARCHAR(50),rCrn VARCHAR(50),Processor VARCHAR(50),Pay_out_agent VARCHAR(25),PID VARCHAR(50),PRIMARY KEY (id),UNIQUE INDEX id_UNIQUE (id ASC) VISIBLE);";
         return pool.query(q);
     }
 
@@ -47,13 +47,13 @@ module.exports = class Data{
 
     //Create credorex table
     static createTable_credorex(){
-        const q = "CREATE TABLE credorex (id INT UNSIGNED NOT NULL AUTO_INCREMENT,statement_date VARCHAR(20) ,transaction_date VARCHAR(20),posting_date VARCHAR(20) ,transaction_currency VARCHAR(10),cs_settlement_currency VARCHAR(10)  ,transaction_amount VARCHAR(45),transaction_type VARCHAR(20) ,fixed_transaction_fee VARCHAR(45) ,discount_rate VARCHAR(50),interchange VARCHAR(15),card_scheme_fees VARCHAR(15),acquiring_fee VARCHAR(15),net_activity VARCHAR(15),card_scheme VARCHAR(15), merchant_reference_number_h9 VARCHAR(20),PRIMARY KEY (id),UNIQUE INDEX id_UNIQUE (id ASC) VISIBLE);";
+        const q = "CREATE TABLE credorex (id INT UNSIGNED NOT NULL AUTO_INCREMENT,statement_date VARCHAR(20) ,transaction_date VARCHAR(20),posting_date VARCHAR(20) ,transaction_currency VARCHAR(50),cs_settlement_currency VARCHAR(50)  ,transaction_amount VARCHAR(45),transaction_type VARCHAR(150) ,fixed_transaction_fee VARCHAR(45) ,discount_rate VARCHAR(50),interchange VARCHAR(50),card_scheme_fees VARCHAR(50),acquiring_fee VARCHAR(50),net_activity VARCHAR(50),card_scheme VARCHAR(50), merchant_reference_number_h9 VARCHAR(50),PRIMARY KEY (id),UNIQUE INDEX id_UNIQUE (id ASC) VISIBLE);";
         return pool.query(q);
     }
 
     //Create credorex_index
     static createTable_credorex_index(){
-        const q = "CREATE TABLE credorex_index (id INT UNSIGNED NOT NULL AUTO_INCREMENT,statement_date VARCHAR(20) ,transaction_date VARCHAR(20),posting_date VARCHAR(20) ,transaction_currency VARCHAR(10),cs_settlement_currency VARCHAR(10) ,transaction_amount VARCHAR(45),transaction_type VARCHAR(20) ,fixed_transaction_fee VARCHAR(45) ,discount_rate VARCHAR(50),interchange VARCHAR(15),card_scheme_fees VARCHAR(15),acquiring_fee VARCHAR(15),net_activity VARCHAR(15),card_scheme VARCHAR(15), merchant_reference_number_h9 VARCHAR(20),PRIMARY KEY (id),UNIQUE INDEX id_UNIQUE (id ASC) VISIBLE);";
+        const q = "CREATE TABLE credorex_index (id INT UNSIGNED NOT NULL AUTO_INCREMENT,statement_date VARCHAR(20) ,transaction_date VARCHAR(75),posting_date VARCHAR(75) ,transaction_currency VARCHAR(50),cs_settlement_currency VARCHAR(50) ,transaction_amount VARCHAR(45),transaction_type VARCHAR(150) ,fixed_transaction_fee VARCHAR(45) ,discount_rate VARCHAR(50),interchange VARCHAR(50),card_scheme_fees VARCHAR(50),acquiring_fee VARCHAR(50),net_activity VARCHAR(50),card_scheme VARCHAR(50), merchant_reference_number_h9 VARCHAR(50),PRIMARY KEY (id),UNIQUE INDEX id_UNIQUE (id ASC) VISIBLE);";
         return pool.query(q);
     }
 
@@ -69,6 +69,14 @@ module.exports = class Data{
     static reconciliation_credorex(){
         const q1 = "INSERT INTO appdb.recon_credorex (statement_date,ID_system,amount_system,currency_system, posting_date_system) SELECT statement_date,merchant_reference_number_h9, transaction_amount,transaction_currency,posting_date FROM appdb.credorex LEFT JOIN appdb.cp_credorex ON appdb.cp_credorex.ID_trans = appdb.credorex.merchant_reference_number_h9 AND appdb.cp_credorex.Paid = appdb.credorex.transaction_amount AND appdb.cp_credorex.pCrn = appdb.credorex.transaction_currency WHERE appdb.cp_credorex.ID_trans IS NULL; ";
         const q2 = "INSERT INTO appdb.recon_credorex (statement_date,ID_processor,amount_processor,currency_processor, posting_date_processor) SELECT sDate,ID_trans,Paid,pCrn,rDate FROM appdb.cp_credorex LEFT JOIN appdb.credorex ON appdb.credorex.merchant_reference_number_h9 = appdb.cp_credorex.ID_trans AND appdb.credorex.transaction_amount = appdb.cp_credorex.Paid  AND appdb.credorex.transaction_currency = appdb.cp_credorex.pCrn WHERE appdb.credorex.merchant_reference_number_h9 IS NULL;";
+        return pool.query(q1).then(()=>{
+            pool.query(q2);
+        });
+    }
+
+    static update_reconciliation_credoex(){
+        const q1 = "DELETE FROM appdb.recon_credorex WHERE ID_system IN (SELECT ID_processor FROM appdb.recon_credorex WHERE ID_system IS NOT NULL AND ID_processor IS NOT NULL);";
+        const q2 = "DELETE FROM appdb.recon_credorex WHERE ID_processor IN (SELECT ID_system FROM appdb.recon_credorex WHERE ID_system IS NOT NULL AND ID_processor IS NOT NULL);";
         return pool.query(q1).then(()=>{
             pool.query(q2);
         });
@@ -122,9 +130,19 @@ module.exports = class Data{
         return pool.query(q);
     }
 
+    static get_sum_recon(table_name,column, column_curr, item_curr){
+        const q = `SELECT SUM(${column}) AS total_sum FROM ${table_name} WHERE ${column_curr} = "${item_curr}";`
+        return pool.query(q);
+    }
+
     
-    static get_sum_fees(table_name, column){
-        const q = `SELECT SUM(${column}) AS total_sum FROM ${table_name};`;
+    static get_sum_fees(table_name, column, column_curr,curr){
+        const q = `SELECT SUM(${column}) AS total_sum FROM ${table_name} WHERE ${column_curr} = "${curr}";`;
+        return pool.query(q);
+    }
+
+    static get_record_statement(table_name, column_date, date ,column_curr, curr){
+        const q = `SELECT * FROM appdb.${table_name} WHERE ${column_date}="${date}" AND ${column_curr} = "${curr}"`;
         return pool.query(q);
     }
 

@@ -45,6 +45,7 @@ router.post('/processor/credorax/uploadcpcredorex',fileUpload(uploadcpfile),file
 router.get('/processor/credorax/reconcredorex',processorController.reconciliation_credorex);
 router.get('/processor/credorax/getreconcredorex',processorController.get_reconcilitaion_credorex);
 router.delete('/processor/credorax/deleteallreconcredorex',processorController.deleteAllData_recon_credorex);
+router.get('/processor/credorax/updaterecon',processorController.update_recon);
 
 //*********** credorex *************** */
 router.delete('/processor/credorax/deleteallcredorex',processorController.deleteAllData_credorex);
@@ -67,7 +68,10 @@ router.get('/processor/credorax/getrecondate/:date',processorController.get_reco
 router.post('/processor/credorax/postregister',processorController.register_credorex_index);
 router.get('/processor/credorax/getpayments',processorController.get_payment_index);
 router.get('/processor/credorax/getsumpayments',processorController.get_sum_payment);
-router.get('/processor/credorax/getsumfees', processorController.get_sum_fees)
+router.get('/processor/credorax/getsumfees', processorController.get_sum_fees);
+router.get('/processor/credorax/getsumrefund', processorController.get_sum_refund);
+router.get('/processor/credorax/getsumsystem',processorController.get_sum_recon);
+router.get('/processor/credorax/getindex',processorController.get_record_statement);
 
 /*-----------------------------------------------------*/
 module.exports = router;
